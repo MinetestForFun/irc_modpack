@@ -18,7 +18,7 @@ local function load_tokens()
 	local f = io.open(tokens_file, "r")
 	local tokens = {}
 	if f then
-		tokens = minetest.deserialize(f:read())	
+		tokens = minetest.deserialize(f:read())
 		f:close()
 	end
 	return tokens
@@ -68,7 +68,7 @@ minetest.register_chatcommand("gen_token", {
 					..irc_users[nick] .. " (token regenerated)")
 				irc_users[nick] = nil
 				irc:say(nick, "Token regenerated. You are now logged off.")
-			end		
+			end
 		end
 		return true
 	end
@@ -93,7 +93,7 @@ minetest.register_chatcommand("del_token", {
 						..irc_users[nick] .. " (token regenerated)")
 					irc_users[nick] = nil
 					irc:say(nick, "Token regenerated. You are now logged off.")
-				end		
+				end
 			end
 			return true, "Access for you using a token has been removed. Use /gen_token to create" ..
 				" a new token at any time"
