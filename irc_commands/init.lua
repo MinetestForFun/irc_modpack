@@ -123,55 +123,49 @@ irc:register_hook("OnQuit", function(user, reason)
 end)
 
 
--- Pretty much a copypasta of the command right after this one
--- We'll keep "login" until passwords are broken. When it happens,
--- We'll remove "tlogin" and modify "login" to handle tokens
-irc:register_bot_command("tlogin", {
-	params = "<username> <pass_token>",
-	description = "Login as an user to run commands, using a token",
-	func = function(user, args)
-		if args == "" then
-			return false, "You need a username and a token."
-		end
-		local playerName, token = args:match("^(%S+)%s(%S+)$")
-		if not playerName then
-			return false, "Player name and password required."
-		end
-		local inChannel = false
-		local users = irc.conn.channels[irc.config.channel].users
-		for cnick, cuser in pairs(users) do
-			if user.nick == cnick then
-				inChannel = true
-				break
-			end
-		end
-		if not inChannel then
-			return false, "You need to be in the server's channel to login."
-		end
-		if irc_tokens[playerName] and
-			irc_tokens[playerName] == token then
-			minetest.log("action", "User " .. user.nick
-					.." from IRC logs in as " .. playerName .. " using their token")
-			irc_users[user.nick] = playerName
-			return true, "You are now logged in as " .. playerName
-		else
-			minetest.log("action", user.nick.."@IRC attempted to log in as "
-				..playerName.." unsuccessfully using a token")
-			return false, "Incorrect token or player does not exist."
-		end
+-- Since `minetest.get_password_hash` is broken by the new SRP auth mechanism
+-- We will still allow to use login, but with tokens, and fall back to old hashs
+-- If 1° we can use them and 2° a token is generated
+
+function checkToken(playerName, token, usernick)
+	if irc_tokens[playerName] and
+		irc_tokens[playerName] == token then
+		minetest.log("action", "User " .. usernick
+			.." from IRC logs in as " .. playerName .. " using their token")
+		irc_users[usernick] = playerName
+		return true, "You are now logged in as " .. playerName
+	else
+		minetest.log("action", usernick.."@IRC attempted to log in as "
+			..playerName.." unsuccessfully using a token")
+		return false, "Incorrect token or player does not exist."
 	end
-})
+end
+
+function checkPassword(playerName, password, usernick)
+	if minetest.auth_table[playerName] and
+			minetest.auth_table[playerName].password ==
+			minetest.get_password_hash(playerName, password) then
+		minetest.log("action", "User "..usernick
+				.." from IRC logs in as "..playerName)
+		irc_users[usernick] = playerName
+		return true, "You are now logged in as "..playerName
+	else
+		minetest.log("action", usernick.."@IRC attempted to log in as "
+			..playerName.." unsuccessfully")
+		return false, "Incorrect password or player does not exist."
+	end
+end
 
 irc:register_bot_command("login", {
-	params = "<username> <password>",
+	params = "<username> <password or token>",
 	description = "Login as a user to run commands",
 	func = function(user, args)
 		if args == "" then
-			return false, "You need a username and password."
+			return false, "You need a username and password/token."
 		end
 		local playerName, password = args:match("^(%S+)%s(%S+)$")
 		if not playerName then
-			return false, "Player name and password required."
+			return false, "Player name and password/token required."
 		end
 		local inChannel = false
 		local users = irc.conn.channels[irc.config.channel].users
@@ -184,17 +178,22 @@ irc:register_bot_command("login", {
 		if not inChannel then
 			return false, "You need to be in the server's channel to login."
 		end
-		if minetest.auth_table[playerName] and
-				minetest.auth_table[playerName].password ==
-				minetest.get_password_hash(playerName, password) then
-			minetest.log("action", "User "..user.nick
-					.." from IRC logs in as "..playerName)
-			irc_users[user.nick] = playerName
-			return true, "You are now logged in as "..playerName
+
+		local u, m = checkToken(playerName, password, user.nick)
+		if not u then
+			if minetest.auth_table[playerName].password:sub(1,3) == "#1#" then -- First SRP mechanism
+				if not irc_tokens[playerName] then
+					return false, "No token available for your nickname. " ..
+						"Please consider generating one with /gen_token"
+				else
+					return u, m
+				end
+			else
+				-- The old mechanism
+				return checkPassword(playerName, password, user.nick)
+			end
 		else
-			minetest.log("action", user.nick.."@IRC attempted to log in as "
-				..playerName.." unsuccessfully")
-			return false, "Incorrect password or player does not exist."
+			return u, m
 		end
 	end
 })
