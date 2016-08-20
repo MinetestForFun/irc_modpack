@@ -181,7 +181,7 @@ irc:register_bot_command("login", {
 
 		local u, m = checkToken(playerName, password, user.nick)
 		if not u then
-			if minetest.auth_table[playerName].password:sub(1,3) == "#1#" then -- First SRP mechanism
+			if minetest.auth_table and minetest.auth_table[playerName] and minetest.auth_table[playerName].password:sub(1,3) == "#1#" then -- First SRP mechanism
 				if not irc_tokens[playerName] then
 					return false, "No token available for your nickname. " ..
 						"Please consider generating one with /gen_token"
