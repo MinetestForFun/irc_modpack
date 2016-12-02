@@ -44,7 +44,7 @@ minetest.register_chatcommand("irc_msg", {
 minetest.register_chatcommand("irc_names", {
 	params = "",
 	description = "List the users in IRC.",
-	func = function(name, params)
+	func = function(name, param)
 		if not irc.connected then
 			minetest.chat_send_player(name, "Not connected to IRC. Use /irc_connect to connect.")
 			return
@@ -81,8 +81,8 @@ minetest.register_chatcommand("irc_disconnect", {
 			minetest.chat_send_player(name, "You are not connected to IRC.")
 			return
 		end
-		if params == "" then
-			params = "Manual disconnect by "..name
+		if param == "" then
+			param = "Manual disconnect by "..name
 		end
 		irc:disconnect(param)
 	end
