@@ -124,3 +124,19 @@ minetest.chatcommands["me"].func = function(name, param, ...)
 	irc:say(("* %s %s"):format(name, param))
 end
 
+minetest.register_chatcommand("irc_change_server", {
+	params = "<servername>",
+	description = "Change the IRC server.",
+	privs = {irc_admin=true},
+	func = function(name, param)
+		if param == "" then
+			minetest.chat_send_player(name, "Missing argument servername")
+			return
+		end
+		irc.config.server = param
+		irc.save_config()
+		minetest.chat_send_player(name, "New server IRC is \"".. param.."\".")
+		minetest.chat_send_player(name, "type \"/irc_reconnect\" to reconnect IRC.")
+	end
+})
+

@@ -57,3 +57,33 @@ if not irc.config.nick then
 	)
 end
 
+
+local config_file = minetest.get_worldpath() .. "/irc.txt"
+
+function irc.save_config()
+	local input, err = io.open(config_file, "w")
+	if input then
+		local conf = {server = irc.config.server}
+		input:write(minetest.serialize(conf))
+		input:close()
+	else
+		minetest.log("error", "open(" .. config_file .. ", 'w') failed: " .. err)
+	end
+end
+
+function irc.load_config()
+	local file = io.open(config_file, "r")
+	local settings = {}
+	if file then
+		settings = minetest.deserialize(file:read("*all"))
+		file:close()
+		if settings and type(settings) == "table" then
+			if settings["server"] ~= nil then
+				 irc.config.server = settings["server"]
+			end
+		end
+	end
+end
+
+irc.load_config()
+
