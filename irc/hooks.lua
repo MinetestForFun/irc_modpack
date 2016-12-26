@@ -19,7 +19,7 @@ local function normalize(text)
 	-- Strip colors
 	text = text:gsub("\3[0-9][0-9,]*", "")
 
-	return text:gsub(stripped_chars, "")
+	return text --:gsub(stripped_chars, "")
 end
 
 
