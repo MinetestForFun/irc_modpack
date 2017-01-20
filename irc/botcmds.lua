@@ -80,7 +80,7 @@ irc:register_bot_command("help", {
 
 		local cmd = irc.bot_commands[args]
 		if not cmd then
-			return false, "Unknown command '"..cmdname.."'."
+			return false, "Unknown command '"..args.."'."
 		end
 
 		return true, ("Usage: %c%s %s -- %s"):format(
