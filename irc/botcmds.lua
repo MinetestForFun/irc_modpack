@@ -83,7 +83,7 @@ irc:register_bot_command("help", {
 			return false, "Unknown command '"..args.."'."
 		end
 
-		return true, ("Usage: %c%s %s -- %s"):format(
+		return true, ("Usage: %s%s %s -- %s"):format(
 				irc.config.command_prefix,
 				args,
 				cmd.params or "<no parameters>",
